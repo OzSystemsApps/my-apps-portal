@@ -30,7 +30,6 @@
             padding: 40px;
         }
         
-        /* Login Page Styles */
         .login-page {
             text-align: center;
         }
@@ -97,6 +96,7 @@
             color: #667eea;
             text-decoration: none;
             font-weight: 600;
+            cursor: pointer;
         }
         
         .toggle-form a:hover {
@@ -121,7 +121,6 @@
             display: none;
         }
         
-        /* Portal Page Styles */
         .portal-page {
             display: none;
         }
@@ -178,6 +177,7 @@
             text-decoration: none;
             transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
+            display: block;
         }
         
         .app-card:hover {
@@ -212,7 +212,7 @@
             <!-- Login Form -->
             <div class="login-form" id="loginForm">
                 <h2>Login</h2>
-                <form onsubmit="handleLogin(event)">
+                <form id="loginFormElement">
                     <div class="form-group">
                         <label>Email</label>
                         <input type="email" id="loginEmail" required>
@@ -223,15 +223,15 @@
                     </div>
                     <button type="submit" class="btn">Login</button>
                 </form>
-<div class="toggle-form">
-    Don't have an account? <a href="javascript:void(0)" onclick="showSignup(); return false;">Sign up</a>
-</div>
+                <div class="toggle-form">
+                    Don't have an account? <a id="showSignupLink">Sign up</a>
+                </div>
             </div>
             
             <!-- Signup Form -->
             <div class="login-form hidden" id="signupForm">
                 <h2>Create Account</h2>
-                <form onsubmit="handleSignup(event)">
+                <form id="signupFormElement">
                     <div class="form-group">
                         <label>Email</label>
                         <input type="email" id="signupEmail" required>
@@ -247,7 +247,7 @@
                     <button type="submit" class="btn">Sign Up</button>
                 </form>
                 <div class="toggle-form">
-                    Already have an account? <a href="javascript:void(0)" onclick="showLogin(); return false;">Login</a>
+                    Already have an account? <a id="showLoginLink">Login</a>
                 </div>
             </div>
         </div>
@@ -258,40 +258,57 @@
                 <h1>My Apps</h1>
                 <div class="user-info">
                     <span class="user-email" id="userEmail"></span>
-                    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                    <button class="logout-btn" id="logoutBtn">Logout</button>
                 </div>
             </div>
             
             <div class="apps-grid" id="appsGrid">
-                <!-- App cards will be added here -->
-                <!-- Example app card - you'll customize these -->
-                <a href="#" class="app-card" onclick="alert('App 1 will open here')">
+                <div class="app-card" onclick="alert('App 1 will open here')">
                     <h3>📱 App 1</h3>
                     <p>Your first application description</p>
-                </a>
+                </div>
                 
-                <a href="#" class="app-card" onclick="alert('App 2 will open here')">
+                <div class="app-card" onclick="alert('App 2 will open here')">
                     <h3>💼 App 2</h3>
                     <p>Your second application description</p>
-                </a>
+                </div>
                 
-                <a href="#" class="app-card" onclick="alert('App 3 will open here')">
+                <div class="app-card" onclick="alert('App 3 will open here')">
                     <h3>🎯 App 3</h3>
                     <p>Your third application description</p>
-                </a>
-                
-                <!-- Add more app cards as needed -->
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // REPLACE THESE WITH YOUR SUPABASE CREDENTIALS
+        // Supabase Configuration
         const SUPABASE_URL = 'https://ggozsalkszejhqzjmdya.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdnb3pzYWxrc3plamhxemptZHlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMTI1NjEsImV4cCI6MjA4NTg4ODU2MX0.ihbamZ9TC8_rSvll4wzqT7OOPOQK56q9xOMJNmOXdzgE';
         
-        // Initialize Supabase client
+        // Initialize Supabase
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // DOM Elements
+        const loginPage = document.getElementById('loginPage');
+        const portalPage = document.getElementById('portalPage');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const loginFormElement = document.getElementById('loginFormElement');
+        const signupFormElement = document.getElementById('signupFormElement');
+        const showSignupLink = document.getElementById('showSignupLink');
+        const showLoginLink = document.getElementById('showLoginLink');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const userEmail = document.getElementById('userEmail');
+        
+        // Event Listeners
+        loginFormElement.addEventListener('submit', handleLogin);
+        signupFormElement.addEventListener('submit', handleSignup);
+        showSignupLink.addEventListener('click', showSignup);
+        showLoginLink.addEventListener('click', showLogin);
+        logoutBtn.addEventListener('click', handleLogout);
         
         // Check if user is already logged in
         checkUser();
@@ -303,9 +320,9 @@
             }
         }
         
-        // Handle Login
         async function handleLogin(event) {
             event.preventDefault();
+            clearMessages();
             
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
@@ -322,9 +339,9 @@
             }
         }
         
-        // Handle Signup
         async function handleSignup(event) {
             event.preventDefault();
+            clearMessages();
             
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
@@ -347,52 +364,48 @@
             }
         }
         
-        // Handle Logout
         async function handleLogout() {
             await supabase.auth.signOut();
-            document.getElementById('portalPage').style.display = 'none';
-            document.getElementById('loginPage').style.display = 'block';
+            portalPage.style.display = 'none';
+            loginPage.style.display = 'block';
             showLogin();
         }
         
-        // Show portal page
         function showPortal(user) {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('portalPage').style.display = 'block';
-            document.getElementById('userEmail').textContent = user.email;
+            loginPage.style.display = 'none';
+            portalPage.style.display = 'block';
+            userEmail.textContent = user.email;
         }
         
-        // Toggle between login and signup
-        function showSignup() {
-            document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('signupForm').classList.remove('hidden');
+        function showSignup(event) {
+            if (event) event.preventDefault();
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
             clearMessages();
         }
         
-        function showLogin() {
-            document.getElementById('signupForm').classList.add('hidden');
-            document.getElementById('loginForm').classList.remove('hidden');
+        function showLogin(event) {
+            if (event) event.preventDefault();
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
             clearMessages();
         }
         
-        // Error and success messages
         function showError(message) {
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-            document.getElementById('successMessage').style.display = 'none';
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
         }
         
         function showSuccess(message) {
-            const successDiv = document.getElementById('successMessage');
-            successDiv.textContent = message;
-            successDiv.style.display = 'block';
-            document.getElementById('errorMessage').style.display = 'none';
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
         }
         
         function clearMessages() {
-            document.getElementById('errorMessage').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
         }
     </script>
 </body>
